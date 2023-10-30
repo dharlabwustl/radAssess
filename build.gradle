@@ -31,7 +31,7 @@ plugins {
 //       Maven naming conventions: https://maven.apache.org/guides/mini/guide-naming-conventions.html
 //       For example, if a group at Miskatonic University developed a plugin, the
 //       group might be "edu.miskatonic.imaging.xnat".
-group "org.nrg.xnatx.plugins"
+group "org.nrg.xnat.turbine.modules.screens"
 version "1.0.0-SNAPSHOT"
 description "XNAT Template1 Plugin for XNAT 1.8"
 
