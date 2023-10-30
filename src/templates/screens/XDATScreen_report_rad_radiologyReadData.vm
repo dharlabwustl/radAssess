@@ -1,0 +1,95 @@
+##Copyright 2005 Harvard University / Howard Hughes Medical Institute (HHMI) All Rights Reserved
+#if($project)
+
+#else
+  #set($project=$om.getProject())
+#end
+<TABLE width="100%" align="left" valign="top" border=0>
+	<TR>
+		<TD width="450" align="left">
+			<TABLE width="100%">
+				<TR>
+					<TD align="left"><font face="$ui.sansSerifFonts" size="4" style="line-height:20px;"><b>Research Radiological Assessment</b></font></TD>
+				</TR>								<TR>
+					<TD align="left">$item.getProperty("ID") / $item.getProperty("label")</TD>
+				</TR>
+			</TABLE>
+			
+			<P><TABLE align="left" width="100%">
+				<TR>
+			<TD>
+				<HR>
+				<TABLE align="left">
+			#parse($turbineUtils.getTemplateName("_summary",$om.getXSIType(),$project))
+				</TABLE>
+			</TD>
+		</TR>
+				<TR>
+					<TD>
+						<HR>
+						<TABLE>
+<TR><TH valign="top" align="left" width=200>Reader:</TH><TD>$!om.getProperty("rad:radiologyReadData.reader")</TD></TR>
+<TR><TH valign="top" align="left" width=200>Exam:</TH><TD>$!om.getProperty("rad:radiologyReadData.exam")</TD></TR>
+<TR><TH valign="top" align="left" width=200>History:</TH><TD>$!om.getProperty("rad:radiologyReadData.history")</TD></TR>
+							<TR><TH valign="top" align="left" width=200>Technique:</TH><TD>$!om.getProperty("rad:radiologyReadData.technique")</TD></TR>
+							<TR><TH valign="top" align="left" width=200>Comparison:</TH><TD>$!om.getProperty("rad:radiologyReadData.comparison")</TD></TR>
+							<TR><TH valign="top" align="left" width=200>Finding:</TH><TD>$!om.getProperty("rad:radiologyReadData.finding")</TD></TR>
+							<TR><TH valign="top" align="left" width=200>Diagnosis/Impression:</TH><TD>$!om.getProperty("rad:radiologyReadData.diagnosis")</TD></TR>
+							
+							
+							#if($item.getProperty("rad:radiologyReadData/finding/normal_status")==1)
+								<TR><TH valign="top" align="left" width=200>Status:</TH><TD>normal</TD></TR>
+							#else
+								<TR><TH valign="top" align="left" width=200>Status:</TH><TD>abnormal</TD></TR>
+							#end
+							<TR><TH valign="top" align="left" width=200>Recommend Further Evaluation:</TH><TD>$!om.getBooleanProperty("rad:radiologyReadData.followup_recommended")</TD></TR>
+						</TABLE>
+					</TD>
+				</TR>
+				<TR>
+					<TD>
+						<HR>
+						<TABLE>
+</TABLE>
+					</TD>
+				</TR>
+			</TABLE></P>
+		</TD>
+		<TD valign="top" align="right">
+			#elementActionsBox($element $search_field $search_value $data.getSession().getAttribute("user") $item)
+		</TD>
+	</TR>
+	
+	<TR><TD colspan=2>
+	#set($existing = $om.getOut_file())
+					#set($mr=$om.getMrSessionData())
+#if ($existing.size() > 0)
+#set($imageCount=0)
+<TABLE>
+ <TR>
+		<TD colspan="3" align="left"><font face="$ui.sansSerifFonts" size="4" style="line-height:20px;"><b>Key Images</b></font></TD>
+ </TR>
+ <TR>
+ #foreach($existingF in $existing)
+  #foreach($file in $existingF.getCorrespondingFiles($mr.getArchivePath()))
+   <TD valign="top"><b>$!existingF.getLabel()</b><br><IMG src="$link.setPage("SessionFile.vm").addPathInfo("mr","$mr.getId()").addPathInfo("assessor","$!om.getId()").addPathInfo("resourceID","$!existingF.getProperty('xnat_abstractResource_id')").addPathInfo("file_name","$!file.getName()")"/></TD>
+   
+   #set($imageCount=$imageCount+1)
+   #if($imageCount==3)
+     #set($imageCount=0)
+     </TR><TR>
+   #end 
+  #end
+ #end
+ </TR>
+</TABLE>
+#end
+	</TD></TR>
+	<TR><TD colspan=2>
+		<TABLE width="100%">
+			<TR>
+				<TD align="left" style="line-height:12px;"><font face="$ui.sansSerifFonts" size="1">Important: Please note the above radiological assessment was conducted for research purposes only and may not have included images appropriate to clinical assessment.</font></TD>
+			</TR>
+		</TABLE>
+	</TD></TR>
+</TABLE>

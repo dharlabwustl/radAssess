@@ -1,0 +1,327 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+#set( $includeAutocompleteRadios = true )
+
+$page.setTitle("XDAT")
+$page.setLinkColor($ui.alink)
+$page.setVlinkColor($ui.vlink)
+#set($months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])
+#set($days = [ 1..31 ])
+#set($years = [ $!turbineUtils.getYear()..1900])
+#if ($data.message)
+<font color="red" size="3">$data.message</font>
+#end
+<p>
+<form ID="form1" name="form1" method="post" action="$link.setAction("ModifyItem")">
+<input type="hidden" name="project" value="$!{project}" >
+#if($vr)
+	<font color="red">Invalid parameters:<BR>$vr.toHTML()</font>
+<hr size="1" style="color:#ccc" />
+#end
+
+
+<TABLE width="100%">
+	<TR>
+		<TD>
+			<table width="100%">
+				<TR>
+					<TD align="left" valign="middle">
+<TABLE width="100%">
+				<TR>
+					<TD align="left"><font face="$ui.sansSerifFonts" size="4" style="line-height:20px;"><b>Research Radiological Assessment</b></font></TD>
+				</TR>
+				</TR>
+								<TR>
+					<TD align="left">$item.getProperty("ID") / $item.getProperty("label")</TD>
+				</TR>
+			  <input type="hidden" name="rad:radiologyReadData/ID" value="$item.getProperty("ID")"/>
+			  <input type="hidden" name="rad:radiologyReadData/label" value="$item.getProperty("label")"/>
+			  <input type="hidden" name="rad:radiologyReadData/project" value="$item.getProperty("project")"/>
+			</TABLE>
+			
+			#xdatHiddenBox("rad:radiologyReadData/imageSession_ID" $item "")
+						#xdatHiddenBox("rad:radiologyReadData/modality" $item "MR")
+			<P><TABLE align="left" width="100%">
+				<TR>
+			<TD>
+				<HR>
+				<TABLE align="left">
+					<TR><TH align="left">Session Id: </TH>
+					#set($mr=$om.getMrSessionData())
+					#set($mr_id=$item.getProperty("imageSession_ID"))
+				#if ($mr)
+					#set ( $click = "return popup('$link.setAction('DisplayItemAction').addPathInfo('search_element','xnat:mrSessionData').addPathInfo('search_field','xnat:mrSessionData.ID').addPathInfo('search_value',$mr_id).addPathInfo('popup',true).addPathInfo('project',$project)', '','600','800');" )
+				  <TD><A CLASS=b href="#" onClick="$click">$!mr.getIdentifier($project)</A></TD>
+					#else
+						<TD>$!item.getProperty("imageSession_ID")</TD>
+					#end
+					</TR>
+					<TR><TH align="left" width=200>Session Date: </TH><TD>$!mr.getDate()</TD></TR>
+					<TR><TH align="left">Participant: </TH><TD>$!mr.getSubjectData().getIdentifier($project,false)</TD></TR>
+					<TR align="left"><TH ALIGN="left">Gender: </TH><TD>$!mr.getSubjectData().getGenderText()</TD></TR>
+					<TR align="left"><TH ALIGN="left">Age:</TH><TD>$!mr.SubjectAge</TD></TR>
+				</TABLE>
+
+					</TD>
+				</TR>
+			</TABLE>
+
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+			<TABLE width="100%">
+				<TR>
+					<TD valign="top"> 
+									<HR>
+						<TABLE>
+                <tr><td valign="top" style="padding-top: 4px">Date</td><td>#xdatDateBox("rad:radiologyReadData/date" $item $vr $years)</td></tr>
+                <tr><td valign="top" style="padding-top: 4px">Reader</td><td>#xdatStringBoxWSize("rad:radiologyReadData/reader" $item $fullname $vr 40) </td></tr>
+				
+                #set($examValues = ["Brain with contrast","Brain without contrast","Spine with contrast","Spine without contrast","Brain and Spine with contrast","Brain and Spine without contrast"])
+				
+				<TR><TD valign="top" style="padding-top: 4px">Exam</TD><TD>#xdatSelectBoxWSingleValue("rad:radiologyReadData/exam" $item $examValues $vr)</TD></TR>
+				<tr><td valign="top" style="padding-top: 4px">History</td><td>#xdatStringBoxWSize("rad:radiologyReadData/history" $item "${project}" $vr 40)</td></tr>
+                <tr><td valign="top" style="padding-top: 4px">Technique</td><td>#xdatTextArea("rad:radiologyReadData/technique" $item "Axial T1w and T2w" $vr 4 40)</td></tr>
+                <TR><TD valign="top" style="padding-top: 4px">Comparison</TD><TD>
+							<table align="left" cellpadding="0" cellspacing="0"><tr><td align="left">
+				<SELECT id="SEL_rad:radiologyReadData/comparison" name="SEL_rad:radiologyReadData/comparison"  ONCHANGE="setSelectValue(this);sessionComparison();">
+					<OPTION VALUE="">(SELECT)</OPTION>
+					#foreach($expt in $mr.getSubjectData().getExperiments_experiment("xnat:mrSessionData"))
+									#if($expt.getId().equals($mr.getId()))
+									
+									#else
+									   <OPTION value="$expt.getId()" #if($expt.getId().equals($item.getProperty("rad:radiologyReadData/comparison"))) SELECTED #end>$!expt.getLabel() ($!expt.getDate():$expt.getId())</OPTION>
+									#end
+								  #end
+					<OPTION VALUE="">CUSTOM</OPTION>
+				</SELECT>			</td><td align="left"><DIV ID="IND_rad:radiologyReadData/comparison"><a ID="A_rad:radiologyReadData/comparison" ONCHANGE="showText(this);"></DIV>
+				</td><td>
+				<DIV ID="TEXT_rad:radiologyReadData/comparison" style="display:none"> Enter: <input id="rad:radiologyReadData/comparison" type="text" name="rad:radiologyReadData/comparison" onkeydown="if(event.keyCode==13)document.getElementById('comparisonButton').click()" value="$!item.getProperty("rad:radiologyReadData/comparison")"/><a href="#" id="comparisonButton" onClick="javascript:comparisonSubmit();"><img src="$content.getURI("/images/arrow3.gif")" border="0"></a></DIV>
+				</td></tr></table>
+				</TD></TR>
+				
+				#if($includeAutocompleteRadios)
+					<tr>
+						<td valign="top" style="padding-top: 4px">Observations
+						</td>
+						<td>
+							<table>
+								<tr bgcolor="#F0F0F0"><td>Volume Loss</td><td><label><input type="radio" name="r1" value="None">None</label><label><input type="radio" name="r1" value="Mild">Mild</label><label><input type="radio" name="r1" value="Moderate">Moderate</label><label><input type="radio" name="r1" value="Severe">Severe</label></td></tr>
+								<tr><td>Leukoaraiosis</td><td><label><input type="radio" name="r2" value="None">None</label><label><input type="radio" name="r2" value="Mild">Mild</label><label><input type="radio" name="r2" value="Moderate">Moderate</label><label><input type="radio" name="r2" value="Severe">Severe</label></td></tr>
+								<tr bgcolor="#F0F0F0"><td>Lacunes</td><td><label><input type="radio" name="r3" value="None">None</label><label><input type="radio" name="r3" value="One">One</label><label><input type="radio" name="r3" value="Several">Several</label></td></tr>
+							</table>
+						</td>
+					</tr>
+				#end
+				
+                <tr><td valign="top" style="padding-top: 4px">Findings</td><td>#xdatTextArea("rad:radiologyReadData/finding" $item "" $vr 4 40)</td>
+				
+				#if($includeAutocompleteRadios)
+					<tr><td>&nbsp;</td><td>
+						<table>
+							<tr bgcolor="#F0F0F0"><td>Aging Changes</td><td><label><input type="radio" name="r4" value="None">None</label><label><input type="radio" name="r4" value="Mild">Mild</label><label><input type="radio" name="r4" value="Moderate">Moderate</label><label><input type="radio" name="r4" value="Severe">Severe</label></td></tr>
+						</table>
+						</td>
+					</tr>
+				#end
+				
+                <tr><td valign="top" style="padding-top: 4px">Diagnosis/Impression</td><td>#xdatTextArea("rad:radiologyReadData/diagnosis" $item "" $vr 4 40)</td></tr>
+
+                #set($statusOptions = ["Normal", "Abnormal"])
+                <tr><td valign="top" style="padding-top: 4px">Status</td><td>
+				#if($item.getProperty("rad:radiologyReadData/finding/normal_status")==0)
+					<input type="radio" name="rad:radiologyReadData/finding/normal_status" value="1"/>&nbsp;normal<input type="radio" name="rad:radiologyReadData/finding/normal_status" value="0" CHECKED/>&nbsp;abnormal</td></tr>
+                #else
+					<input type="radio" name="rad:radiologyReadData/finding/normal_status" value="1" CHECKED/>&nbsp;normal<input type="radio" name="rad:radiologyReadData/finding/normal_status" value="0"/>&nbsp;abnormal</td></tr>
+                #end
+				<tr><td valign="top" style="padding-top: 4px">Recommend Further Eval</td><td>#xdatBooleanCheckbox("rad:radiologyReadData/followup_recommended" $item $vr)</td></tr>
+						</TABLE>
+					</TD>
+				</TR>
+			</TABLE>
+		</TD>
+	</TR>
+	<TR>
+		<TD>
+		#xdatEditProps($item $edit_screen)
+		<input type="hidden" name="project" value="$!project"/>
+		<TR><TD COLSPAN=2 ALIGN=left>
+		#if($item.getProperty("label"))
+			<input type="submit" onclick="return validateRadRead();" name="eventSubmit_doPerform" value="Submit"/>
+		#else
+			<input type="button" onclick="validateForm();"  name="eventSubmit_doInsert" value="Submit" />
+		#end
+		
+		</TD></TR>
+		</TD>
+	</TR>
+</TABLE>
+</form>
+
+<script type="text/javascript">
+var includeAutocompleteRadios = $includeAutocompleteRadios;
+var form = document.getElementById('form1');
+var i = 0;
+var radios1 = form.elements.r1;
+var radios2 = form.elements.r2;
+var radios3 = form.elements.r3;
+var radios4 = form.elements.r4;
+var findings = document.getElementById('rad:radiologyReadData/finding');
+var diagnosis = document.getElementById('rad:radiologyReadData/diagnosis');
+var lacunes; // need to pass lacunes findings from findings to diagnosis.
+
+var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1;
+var yyyy = today.getFullYear();
+var dropdownList = document.getElementsByTagName('select');
+for(var x=0;x < dropdownList.length ; x++){
+	if(dropdownList[x].name=="SEL_rad:radiologyReadData/exam"){
+		if(dropdownList[x].selectedIndex==0){
+			if(document.getElementById('rad:radiologyReadData/exam').value==""){
+				dropdownList[x].selectedIndex = 2;
+			}
+			else{
+				dropdownList[x].selectedIndex = dropdownList[x].length-1;
+			}
+			dropdownList[x].onchange();
+		}
+	}
+}
+
+function validateForm()
+{
+	//INSERT CUSTOM CONTENT HERE
+	validateRadRead();
+	validateExperimentForm();
+	return false;
+}
+
+function validateRadRead()
+{
+	if(document.getElementById('rad:radiologyReadData/exam').value==""){
+		alert("You must specify the type of exam. Please select one or enter a custom one and submit again.");
+		return false;
+	}
+} 
+
+
+function sessionComparison() {
+	for(var c=0;c < dropdownList.length; c++){
+		if(dropdownList[c].name=="SEL_rad:radiologyReadData/comparison"){
+			if((dropdownList[c].selectedIndex!=0)&&(dropdownList[c].selectedIndex!=dropdownList[c].length-1) && document.getElementById('rad:radiologyReadData/comparison').value!=""){
+				window.open( serverRoot+"/data/archive/projects/${item.getProperty("project")}/subjects/${mr.getSubjectData().getLabel()}/experiments/"+document.getElementById('rad:radiologyReadData/comparison').value);
+			}
+		}
+	}
+}
+
+function setTextR1() {
+	if(includeAutocompleteRadios){
+		var form = this.form;
+		if(!(this.value==="None")){
+			document.getElementById('rad:radiologyReadData/finding').value = document.getElementById('rad:radiologyReadData/finding').value+this.value+" volume loss. ";
+		}
+	}
+}  
+
+function setTextR2() {
+	if(includeAutocompleteRadios){
+		var form = this.form;
+        if(!(this.value==="None")){
+			findings.value += this.value+" Leukoaraiosis. ";
+		}
+	}
+} 
+
+function setTextR3() {
+	if(includeAutocompleteRadios){
+		var form = this.form;
+		if(this.value==="One"){
+			findings.value += "Single lacune observed in ... ";
+            findings.focus();
+            createSelection (findings, findings.value.length-4, findings.value.length-1); // optional: select the ellipses to prompt user to complete finding.
+		}
+		else if(!(this.value==="None")){
+			findings.value += "Multiple lacunes observed in ... ";
+            findings.focus();
+            createSelection (findings, findings.value.length-4, findings.value.length-1); // optional: select the ellipses to prompt user to complete finding.
+        }
+	}
+	if(this.value==="One"){
+		lacunes = " with a lacune. ";
+	}
+	else if(!(this.value==="None")){
+		lacunes = " with multiple lacunes. ";
+	}
+}  
+function setTextR4() {
+	if(includeAutocompleteRadios){
+		var form = this.form;
+		if(!(this.value==="None")){
+            // pass in value of lacunes, if found.
+			document.getElementById('rad:radiologyReadData/diagnosis').value = document.getElementById('rad:radiologyReadData/diagnosis').value + this.value + " aging changes" + ((lacunes) ? lacunes : ". ");
+		}
+	}
+}
+
+// special function to select the end of a string in a text field. Adapted from StackOverflow example: http://stackoverflow.com/questions/646611/programmatically-selecting-partial-text-in-an-input-field
+function createSelection(field, start, end) {
+    if( field.createTextRange ) {
+        var selRange = field.createTextRange();
+        selRange.collapse(true);
+        selRange.moveStart('character', start);
+        selRange.moveEnd('character', end);
+        selRange.select();
+    } else if( field.setSelectionRange ) {
+        field.setSelectionRange(start, end);
+    } else if( field.selectionStart ) {
+        field.selectionStart = start;
+        field.selectionEnd = end;
+    }
+    field.focus();
+}
+
+function comparisonSubmit() {
+	 var randNum = Math.floor(Math.random()*1000000000);
+	 popup=window.open(serverRoot+'/app/action/QuickSearchAction', 'QuickSearch'+randNum);
+
+	 var form = document.createElement("form");
+	 form.target= 'QuickSearch'+randNum;
+	 form.action = serverRoot+'/app/action/QuickSearchAction';
+	 var searchVal = document.createElement("input");
+	 searchVal.setAttribute("name","searchValue");
+	 searchVal.setAttribute("value", document.getElementById('rad:radiologyReadData/comparison').value);
+	 form.appendChild(searchVal);
+
+	 form.submit();	 
+}
+
+for (i = 0; i < radios1.length; i += 1) {
+    radios1[i].onclick = setTextR1;
+}
+for (i = 0; i < radios2.length; i += 1) {
+    radios2[i].onclick = setTextR2;
+}
+for (i = 0; i < radios3.length; i += 1) {
+    radios3[i].onclick = setTextR3;
+}
+for (i = 0; i < radios4.length; i += 1) {
+    radios4[i].onclick = setTextR4;
+}
+
+//If editing a Rad Read with non-empty custom comparison, select CUSTOM from dropdown
+if((document.getElementById('SEL_rad:radiologyReadData/comparison').selectedIndex==0) && (document.getElementById('rad:radiologyReadData/comparison').value!="")){
+	document.getElementById('SEL_rad:radiologyReadData/comparison').selectedIndex=document.getElementById('SEL_rad:radiologyReadData/comparison').length-1;
+	document.getElementById('SEL_rad:radiologyReadData/comparison').onchange();
+}
+
+$(document).ready(function() {
+  $(window).keydown(function(event){
+    if(event.keyCode == 13 && !($('textarea').is(":focus"))) {
+      event.preventDefault();
+      return false;
+    }
+  });
+});
+</script>
